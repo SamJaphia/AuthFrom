@@ -1,61 +1,59 @@
 // jshint esversion:6
-require('dotenv').config()
-const express = require('express')
-const bodyParser = require('body-parser')
-const ejs = require('ejs')
-const mongoose = require('mongoose')
-const session = require('express-session')
-const passport = require('passport')
-const passportLocalMongoose = require('passport-local-mongoose')
+require('dotenv').config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const ejs = require('ejs');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const passport = require('passport');
+const passportLocalMongoose = require('passport-local-mongoose');
 const GoogleStrategy = require('passport-google-oauth20').Strategy
-const findOrCreate = require('mongoose-findorcreate')
-
-
+const findOrCreate = require('mongoose-findorcreate');
 
 const app = express();
 
-console.log(process.env.API_KEY)
+console.log(process.env.API_KEY);
 
-app.use (express.static('public'));
+app.use(express.static('public'))
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({
-    extended: true
+  extended: true
 }));
 
 app.use(session({
-  secret:"OurLittleArsenal.",
+  secret: 'OurLittleArsenal.',
   resave: false,
   saveUninitialized: false
-}))
+}));
 
-app.use(passport.initialize())
-app.use(passport.session())
+app.use(passport.initialize());
+app.use(passport.session());
 mongoose.connect('mongodb://localhost:27017/userDB', { useNewUrlParser: true, useUnifiedTopology:true });
-mongoose.set('useCreateIndex', true)
+mongoose.set('useCreateIndex', true);
 
-const userSchema = new mongoose.Schema ({
+const userSchema = new mongoose.Schema({
   email: String,
   password: String,
   googleId: String,
   secret: String
 });
 
-userSchema.plugin(passportLocalMongoose)
-userSchema.plugin(findOrCreate)
+userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(findOrCreate);
 
-const User = new mongoose.model('User', userSchema);
+const User = new mongoose.model ('User', userSchema);
 
-//The createStrategy is responsible to setup passport-local LocalStrategy with the correct options
+// The createStrategy is responsible to setup passport-local LocalStrategy with the correct options
 
-passport.use(User.createStrategy());
+passport.use(User.createStrategy())
  
-passport.serializeUser(function(user, done) {
-  done(null, user.id);
-});
+passport.serializeUser(function (user, done) {
+  done(null, user.id)
+})
 
-passport.deserializeUser(function(id, done) {
-  User.findById(id, function(err, user) {
-    done(err, user);
+passport.deserializeUser(function (id, done) {
+  User.findById(id, function (err, user) {
+    done(err, user)
   });
 });
 
@@ -65,13 +63,13 @@ passport.use(new GoogleStrategy({
   callbackURL: 'http://localhost:3000/auth/google/secrets',
   userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
 },
-function(accessToken, refreshToken, profile, cb) {
-  console.log(profile)
+function (accessToken, refreshToken, profile, cb) {
+  console.log(profile);
   User.findOrCreate({ googleId: profile.id }, function (err, user) {
-    return cb(err, user);
+    return cb(err, user)
   });
-}
-));
+
+))
 
 app.get ('/', function (req, res){
   res.render('home');
@@ -79,7 +77,7 @@ app.get ('/', function (req, res){
 
 // Let the user know we want the profile
 app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile'] })
+  passport.authenticate('google', { scope: ['profile'] });
 )
 
 app.get('/auth/google/secrets', 
@@ -89,11 +87,11 @@ app.get('/auth/google/secrets',
     res.redirect('/secrets');
   });
 
-app.get("/login", function (req, res){
-  res.render("login");
+app.get('/login', function (req, res){
+  res.render('login');
 })
 app.get('/register', function (req, res){
-  res.render("register");
+  res.render('register');
 })
 
 //Find the users secrets
@@ -123,7 +121,7 @@ app.get('/submit', function(req, res){
   } else {
     res.redirect('/login');
   }
-})
+});
 
 app.post('/submit', function(req, res){
   const submittedSecrets= req.body.secret;
@@ -138,17 +136,17 @@ User.findById(req.user.id, function(err, foundUser){
     if (foundUser) {
       foundUser.secret = submittedSecrets
       foundUser.save(function(){
-        res.redirect('/secrets')
+        res.redirect('/secrets');
       });
     }
   }
-})
-})
+});
+});
 
 app.get('/logout', function(req, res){
   req.logout;
   res.redirect('/')
-})
+});
 
 app.listen(3000, function(){
     console.log("Welcome Home");
@@ -164,9 +162,9 @@ app.post('/register', function(req, res){
     } else{
       passport.authenticate('local') (req, res, function(){
         res.redirect('/secrets');
-      })
+      });
     }
-  })
+  });
 });
 
 //Checking for username and password
@@ -183,9 +181,9 @@ app.post('/login', function(req, res){
     } else {
       passport.authenticate('local')(req, res, function(){
         res.redirect('/secrets')
-      })
+      });
     }
-  })
+  });
 
-  })
+  });
   
